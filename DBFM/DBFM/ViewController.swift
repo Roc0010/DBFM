@@ -17,22 +17,33 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     
 //    var
     let identity: String = "douban"
+    var useData = NSArray()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
 //        tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: identity)
-        dispatch_async(dispatch_get_main_queue()) { () -> Void in
-            
-        }
+//        dispatch_async(dispatch_get_main_queue()) { () -> Void in
+//            
+//        }
+        requestData()
     }
     
     func requestData() {
         
         let session = NSURLSession.sharedSession()
-        let task = session.dataTaskWithURL(NSURL(string: "http://douban.fm/j/mine/playlist?type=n&channel=0&from=mainsite")!) { (data, response, error) -> Void in
+        let task = session.dataTaskWithURL(NSURL(string: "http://douban.fm/j/mine/playlist?channel=0")!) { (data, response, error) -> Void in
             
-            
+            if error == nil {
+////
+            do {
+                
+                let jsonReslut: NSDictionary = try NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.MutableContainers) as! NSDictionary
+                print(jsonReslut)
+            }catch {
+                print(error)
+            }
+            }
         }
         task?.resume()
     }
