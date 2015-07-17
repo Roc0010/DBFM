@@ -15,9 +15,8 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     @IBOutlet weak var progressView: UIProgressView!
     @IBOutlet weak var tableView: UITableView!
     
-//    var
     let identity: String = "douban"
-    var useData = NSArray()
+    var tableData = NSArray() //歌曲列表数组
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,15 +31,19 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     func requestData() {
         
         let session = NSURLSession.sharedSession()
-        let task = session.dataTaskWithURL(NSURL(string: "http://douban.fm/j/mine/playlist?channel=0")!) { (data, response, error) -> Void in
+        let task = session.dataTaskWithURL(NSURL(string: "http://douban.fm/j/mine/playlist?channel=0")!) { [unowned self] (data, response, error) -> Void in
             
             if error == nil {
 ////
             do {
                 
                 let jsonReslut: NSDictionary = try NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.MutableContainers) as! NSDictionary
+                self.tableData = jsonReslut.objectForKey("song") as! NSArray
+                self.tableView.reloadData()
                 print(jsonReslut)
-            }catch {
+//                NSLog("%@",jsonReslut)
+            }
+            catch {
                 print(error)
             }
             }
@@ -55,7 +58,7 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return 20
+        return tableData.count
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -65,6 +68,16 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
             
             cell = UITableViewCell(style: UITableViewCellStyle.Subtitle, reuseIdentifier: identity)
         }
+        
+        let rowData = self.tableData[indexPath.row]
+        cell?.textLabel?.text = rowData["title"] as? String
+        cell?.detailTextLabel?.text = rowData["artist"] as? String
+        let imgUrl = rowData["picture"] as! String
+        cell?.imageView?.image = UIImage(named: "detail")
+        let imgU = NSURL(string: imgUrl)!
+        let imgData = NSData(contentsOfURL: imgU)
+        let img = UIImage(data: imgData!)
+        cell?.imageView?.image = img
         
         return cell!
         
