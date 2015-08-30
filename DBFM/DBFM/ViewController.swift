@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import MediaPlayer
 
 class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource {
 
@@ -16,15 +17,16 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     @IBOutlet weak var tableView: UITableView!
     
     let identity: String = "douban"
+    let audioPlay = MPMoviePlayerController()
     var tableData = NSArray() //歌曲列表数组
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
 //        tableView.registerClass(UITableViewCell.self, forCellReuseIdentifier: identity)
-//        dispatch_async(dispatch_get_main_queue()) { () -> Void in
-//            
-//        }
+        dispatch_async(dispatch_get_main_queue()) { () -> Void in
+            
+        }
         requestData()
     }
     
@@ -34,21 +36,36 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         let task = session.dataTaskWithURL(NSURL(string: "http://douban.fm/j/mine/playlist?channel=0")!) { [unowned self] (data, response, error) -> Void in
             
             if error == nil {
-////
-            do {
-                
-                let jsonReslut: NSDictionary = try NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.MutableContainers) as! NSDictionary
-                self.tableData = jsonReslut.objectForKey("song") as! NSArray
-                self.tableView.reloadData()
-                print(jsonReslut)
-//                NSLog("%@",jsonReslut)
-            }
-            catch {
-                print(error)
-            }
+                do {
+                    
+                    let jsonReslut: NSDictionary = try NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.MutableContainers) as! NSDictionary
+                    dispatch_async(dispatch_get_main_queue()) { () -> Void in
+                        
+                        self.tableData = jsonReslut.objectForKey("song") as! NSArray
+                        self.tableView.reloadData()
+                        print(jsonReslut)
+                        let firDict:NSDictionary = self.tableData[0] as! NSDictionary
+                        //获取歌曲文件地址
+                        let audioUrl:String = firDict["url"] as! String
+                        //播放歌曲
+                        let imgUrl:String=firDict["picture"] as! String
+                        self.onSetAudio(audioUrl)
+                        self.iv.image = UIImage(data: NSData(contentsOfURL: NSURL(string: imgUrl)!)!)
+                    }
+                }
+                 catch {
+                    print(error)
+                }
             }
         }
-        task?.resume()
+        task.resume()
+    }
+    
+    func onSetAudio(url: String) {
+        
+        audioPlay.stop()
+        audioPlay.contentURL = NSURL(string: url)
+        audioPlay.play()
     }
     
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
@@ -73,11 +90,8 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         cell?.textLabel?.text = rowData["title"] as? String
         cell?.detailTextLabel?.text = rowData["artist"] as? String
         let imgUrl = rowData["picture"] as! String
-        cell?.imageView?.image = UIImage(named: "detail")
-        let imgU = NSURL(string: imgUrl)!
-        let imgData = NSData(contentsOfURL: imgU)
-        let img = UIImage(data: imgData!)
-        cell?.imageView?.image = img
+        let imgData = NSData(contentsOfURL: NSURL(string: imgUrl)!)
+        cell?.imageView?.image = UIImage(data: imgData!)
         
         return cell!
         
@@ -85,7 +99,13 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         
-        
+        let rowData = self.tableData[indexPath.row]
+        //获取歌曲文件地址
+        let audioUrl:String = rowData["url"] as! String
+        //播放歌曲
+        let imgUrl:String = rowData["picture"] as! String
+        onSetAudio(audioUrl)
+        iv.image = UIImage(data: NSData(contentsOfURL: NSURL(string: imgUrl)!)!)
     }
 
     override func didReceiveMemoryWarning() {
